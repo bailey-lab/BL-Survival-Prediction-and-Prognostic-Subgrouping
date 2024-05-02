@@ -30,21 +30,14 @@ for i, j in df.iterrows():
     if possible_key not in variant_dict:
         variant_dict[possible_key] = []
         all_variants_set.add(possible_key)
-#    if df.iloc[df['sample'] == "a1b90f2c-6f53-482f-9562-a0f58e797389_wgs_gdc_realn_GT"]]
     for sample in known_samples_set:
         if possible_key == "_(1432,G,A)":
-            if sample == "a1b90f2c-6f53-482f-9562-a0f58e797389_wgs_gdc_realn_GT":
-                print("NICE")
-                print(j[sample])
         if j[sample] == "0" or j[sample] == 0:
             val = [str(sample.rstrip('_GT')), 0]
             variant_dict[possible_key].append(val)
         elif j[sample] == "1" or j[sample] == 1:
             val = [str(sample.rstrip('_GT')), 1]
             variant_dict[possible_key].append(val)
-        # else:
-        #      print("YIKES - BUG")
-    # possible_key = None
 
 survival_data_file = open(sys.argv[3], 'r')
 df_survival_data = pd.read_table(survival_data_file)
