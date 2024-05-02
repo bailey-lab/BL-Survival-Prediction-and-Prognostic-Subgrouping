@@ -1,0 +1,19 @@
+./231207_vcf_generation.sh
+
+bcftools norm -m - 231207.EBV1.allsamples.round4.g.vcf.gz | bgzip -c > 231207.EBV1.allsamples.round4.g.biallelic.vcf.gz
+
+vk filter ALT --min=0.05 231207.EBV1.allsamples.round4.g.biallelic.vcf.gz | bcftools view -O z > 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.vcf.gz
+gunzip 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.vcf.gz
+sed -i 's/NC_007605/NC_007605.1/' 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.vcf
+
+java -jar snpEff.jar -c snpEff.config -v NC_007605 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.vcf > 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.vcf
+java -jar SnpSift.jar filter "(ANN[*].EFFECT has 'missense_variant') | (ANN[*].EFFECT has 'frameshift_variant') | (ANN[*].EFFECT has 'inframe_insertion') | (ANN[*].EFFECT has 'disruptive_inframe_insertion') | (ANN[*].EFFECT has 'inframe_deletion') | (ANN[*].EFFECT has 'disruptive_inframe_deletion') | (ANN[*].EFFECT has 'splice_acceptor_variant') | (ANN[*].EFFECT has 'splice_donor_variant')| (ANN[*].EFFECT has 'splice_region_variant') | (ANN[*].EFFECT has 'stop_gained') | (ANN[*].EFFECT has 'stop_lost') | (ANN[*].EFFECT has 'start_lost')" 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.vcf > 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.vcf 
+
+bedtools subtract -header -a 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.vcf  -b /users/iek/data/iek/hrp23_deletion_project/fastq_files/minimap2-2.22_x64-linux/minimap2-2.23_x64-linux/NC_007605_repeatMask.bed > 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.nonrepeats.vcf  
+bedtools jaccard -a EBV1.allsamples.round3.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.nonrepeats.vcf -b 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.nonrepeats.vcf
+
+vk vcf2tsv wide --print-header --ANN 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.vcf > 231207.EBV1.allsamples.round4.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.tsv 
+
+python3 convert_vcf_to_stata_format_all_variants.py EBV1.allsamples.round3.g.biallelic.filter5percent.ann.frameshift_nonframeshift_splice_nonsense_missense.tsv variant_sample_sheet.txt all_survival_data_2_10-06-23.txt dataset1_fileid_to_snpid.txt
+python3 convert_human_tumor_mutated_genes.py blgsp_coding_ssms.csv blgsp_samples_with_survival_data.txt sandeep_somatic_variants.csv 
+python3 combine_ebv_and_mutation_vcfs_to_stata_format.py df_ebvvariants_231107.csv df_human_tumor_mutated_genes_231107.csv varnames.csv
